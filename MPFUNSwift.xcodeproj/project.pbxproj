@@ -16,6 +16,12 @@
 		4708E071279998F50034E8B3 /* MPFUNSwiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4708E070279998F50034E8B3 /* MPFUNSwiftTests.swift */; };
 		4708E07B279998F50034E8B3 /* MPFUNSwiftUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4708E07A279998F50034E8B3 /* MPFUNSwiftUITests.swift */; };
 		4708E07D279998F50034E8B3 /* MPFUNSwiftUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4708E07C279998F50034E8B3 /* MPFUNSwiftUITestsLaunchTests.swift */; };
+		4708E08A279999220034E8B3 /* MPReal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4708E089279999220034E8B3 /* MPReal.swift */; };
+		4708E08C279D84E50034E8B3 /* MPRealConsts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4708E08B279D84E50034E8B3 /* MPRealConsts.swift */; };
+		4708E08F279D853A0034E8B3 /* ComplexModule in Frameworks */ = {isa = PBXBuildFile; productRef = 4708E08E279D853A0034E8B3 /* ComplexModule */; };
+		4708E091279D853A0034E8B3 /* Numerics in Frameworks */ = {isa = PBXBuildFile; productRef = 4708E090279D853A0034E8B3 /* Numerics */; };
+		4708E093279D853A0034E8B3 /* RealModule in Frameworks */ = {isa = PBXBuildFile; productRef = 4708E092279D853A0034E8B3 /* RealModule */; };
+		4708E095279EE0D90034E8B3 /* MPRealFunctions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4708E094279EE0D90034E8B3 /* MPRealFunctions.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +55,9 @@
 		4708E076279998F50034E8B3 /* MPFUNSwiftUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MPFUNSwiftUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4708E07A279998F50034E8B3 /* MPFUNSwiftUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPFUNSwiftUITests.swift; sourceTree = "<group>"; };
 		4708E07C279998F50034E8B3 /* MPFUNSwiftUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPFUNSwiftUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		4708E089279999220034E8B3 /* MPReal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPReal.swift; sourceTree = "<group>"; };
+		4708E08B279D84E50034E8B3 /* MPRealConsts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPRealConsts.swift; sourceTree = "<group>"; };
+		4708E094279EE0D90034E8B3 /* MPRealFunctions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MPRealFunctions.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +65,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4708E091279D853A0034E8B3 /* Numerics in Frameworks */,
+				4708E08F279D853A0034E8B3 /* ComplexModule in Frameworks */,
+				4708E093279D853A0034E8B3 /* RealModule in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +118,9 @@
 				4708E062279998F50034E8B3 /* Assets.xcassets */,
 				4708E064279998F50034E8B3 /* LaunchScreen.storyboard */,
 				4708E067279998F50034E8B3 /* Info.plist */,
+				4708E089279999220034E8B3 /* MPReal.swift */,
+				4708E094279EE0D90034E8B3 /* MPRealFunctions.swift */,
+				4708E08B279D84E50034E8B3 /* MPRealConsts.swift */,
 			);
 			path = MPFUNSwift;
 			sourceTree = "<group>";
@@ -143,6 +158,11 @@
 			dependencies = (
 			);
 			name = MPFUNSwift;
+			packageProductDependencies = (
+				4708E08E279D853A0034E8B3 /* ComplexModule */,
+				4708E090279D853A0034E8B3 /* Numerics */,
+				4708E092279D853A0034E8B3 /* RealModule */,
+			);
 			productName = MPFUNSwift;
 			productReference = 4708E056279998F40034E8B3 /* MPFUNSwift.app */;
 			productType = "com.apple.product-type.application";
@@ -215,6 +235,9 @@
 				Base,
 			);
 			mainGroup = 4708E04D279998F40034E8B3;
+			packageReferences = (
+				4708E08D279D85390034E8B3 /* XCRemoteSwiftPackageReference "swift-numerics" */,
+			);
 			productRefGroup = 4708E057279998F40034E8B3 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -258,9 +281,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4708E08A279999220034E8B3 /* MPReal.swift in Sources */,
 				4708E05E279998F40034E8B3 /* ViewController.swift in Sources */,
 				4708E05A279998F40034E8B3 /* AppDelegate.swift in Sources */,
 				4708E05C279998F40034E8B3 /* SceneDelegate.swift in Sources */,
+				4708E095279EE0D90034E8B3 /* MPRealFunctions.swift in Sources */,
+				4708E08C279D84E50034E8B3 /* MPRealConsts.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -604,6 +630,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4708E08D279D85390034E8B3 /* XCRemoteSwiftPackageReference "swift-numerics" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-numerics.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4708E08E279D853A0034E8B3 /* ComplexModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4708E08D279D85390034E8B3 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = ComplexModule;
+		};
+		4708E090279D853A0034E8B3 /* Numerics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4708E08D279D85390034E8B3 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = Numerics;
+		};
+		4708E092279D853A0034E8B3 /* RealModule */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4708E08D279D85390034E8B3 /* XCRemoteSwiftPackageReference "swift-numerics" */;
+			productName = RealModule;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4708E04E279998F40034E8B3 /* Project object */;
 }
