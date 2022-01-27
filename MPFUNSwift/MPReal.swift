@@ -6,14 +6,7 @@
 //
 
 import Foundation
-import Numerics    // Give access to a Complex type
-
-//public struct Complex : Equatable {
-//    var re, im : Double
-//    init(_ re:Double=0, _ im:Double=0) { self.re = re; self.im = im }
-//    public func conj() -> Complex { Complex(re, -im) }
-//    static public func * (lhs:Double, rhs:Complex) -> Complex { Complex(lhs*rhs.re, lhs*rhs.im) }
-//}
+import Numerics    // Give access to a Real & Complex types
 
 public typealias Complex = ComplexModule.Complex<Double>
 
@@ -51,6 +44,7 @@ public struct MPReal : Codable, CustomStringConvertible, ExpressibleByArrayLiter
     // MARK: - Initialization methods
 
     static func mp_init(size: Int) -> [Int] { var x = [Int](repeating: 0, count: size); x[0] = size; return x }
+    static func mp_zero(_ a: inout mp_real, _ mpnw:Int) { a[1...5] = [mpnw, 0, 0, 0, 0] }
 
     public init(_ ni: Int = 0, size: Int = 0) {
         let size = max(size, 4) // need at least 4 words
@@ -59,7 +53,8 @@ public struct MPReal : Codable, CustomStringConvertible, ExpressibleByArrayLiter
         n[1] = size              // space used
         n[2] = ni.signum()       // sign
         n[3] = 0                 // exponent
-        n[4] = Int(ni.magnitude) // value
+        n[4] = Int(ni.magnitude) >> MPReal.mpnbt // value
+        n[5] = 0
     }
     
     /// Use only if knowledgeable about the internal structure
@@ -108,20 +103,23 @@ extension MPReal : Real {
     }
     
     public init(sign: FloatingPointSign, exponent: Int, significand: MPReal) {
-        // STUB
-        self.init(0, size: 0)
+        let words = significand.n[1]
+        var res = MPReal.mp_init(size: significand.n.count)
+        MPReal.mpdmc(2.0, exponent, &res, words)
+        MPReal.mpmul(res, significand.magnitude.n, &res, words)
+        if sign == .minus { MPReal.mpneg(res, &res, words) }
+        self.init(res)
     }
     
     public init(signOf x: MPReal, magnitudeOf y: MPReal) {
-        // STUB
-        self.init(0, size: 0)
+        let sign = x.sign
+        let mag = sign == .minus ? -y.magnitude : y.magnitude
+        self.init(mag.n)
     }
-    
-    public init(_ value: Int) { self.init(value, size: 1) }
     
     public init<Source>(_ value: Source) where Source : BinaryInteger {
         // STUB
-        self.init(0, size: 0)
+        self.init(Int(value), size: 0)
     }
     
     public static var radix: Int { mpbdx }
@@ -443,13 +441,13 @@ extension MPReal {
         }
         
         ///   Check if input is exactly one.
-        
         if (a[2] == 1 && a[3] == 0 && a[4] == 1) {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
             return // goto 130
         }
         
@@ -765,7 +763,7 @@ extension MPReal {
             c[nb+4] = 0
             c[nb+5] = 0
             return
-        } else if (nb == 0) {
+        } else if nb == 0 {
             ///   B is zero -- the result is A.
             c[1] = mpnw
             c[2] = sign(na, ia)
@@ -802,16 +800,14 @@ extension MPReal {
             let m4 = min (max (na, ish), mpnw + 1)
             let m5 = min (max (na, nb + ish), mpnw + 1)
             
-            //d[4...m1+3] = a[4...m1+3]
-            for i in stride(from: 1, through: m1, by:1)  { //1...m1 {
+            for i in stride(from: 1, through: m1, by:1) { //1...m1 {
                 d[i+3] = a[i+3]
             }
             
-            for i in stride(from: m1+1, through: m2, by: 1)   {
+            for i in stride(from: m1+1, through: m2, by: 1) {
                 d[i+3] = a[i+3] + idb * b[i+2-ish+1]
             }
             
- //           d[m2+4...m3+3] = a[m2+4...m3+3]
             for i in stride(from: m2+1, through: m3, by: 1) {
                 d[i+3] = a[i+3]
             }
@@ -831,29 +827,29 @@ extension MPReal {
         } else {
             ///   B has greater exponent than A, so A must be shifted to the right.
             let nsh = -ish
-            let m1 = min (nb, nsh)
-            let m2 = min (nb, na + nsh)
+            let m1 = min(nb, nsh)
+            let m2 = min(nb, na + nsh)
             let m3 = nb
-            let m4 = min (max (nb, nsh), mpnw + 1)
-            let m5 = min (max (nb, na + nsh), mpnw + 1)
+            let m4 = min(max(nb, nsh), mpnw + 1)
+            let m5 = min(max(nb, na + nsh), mpnw + 1)
             
             for i in 1...m1 {
                 d[i+3] = idb * b[i+3]
             }
             
-            for i in m1+1...m2 {
+            for i in stride(from: m1+1, through: m2, by: 1) {
                 d[i+3] = a[i+2-nsh+1] + idb * b[i+3]
             }
             
-            for i in m2+1...m3 {
+            for i in stride(from: m2+1, through: m3, by: 1) {
                 d[i+3] = idb * b[i+3]
             }
             
-            for i in m3+1...m4 {
+            for i in stride(from: m3+1, through: m4, by: 1) {
                 d[i+3] = 0
             }
             
-            for i in m4+1...m5 {
+            for i in stride(from: m4+1, through: m5, by: 1) {
                 d[i+3] = a[i+2-nsh+1]
             }
             
@@ -969,11 +965,12 @@ extension MPReal {
         var ia = sign(1, a[2])
         var na = min(Int(abs(a[2])), mpnw)
         if na == 0  {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
 //            goto 110
         } else {
             b[1] = mpnw
@@ -988,7 +985,6 @@ extension MPReal {
         }
         
         // 110 continue
-        
         ia = sign(1, a[la+2])
         na = min(Int(abs(a[la+2])), mpnw)
         if na == 0  {
@@ -1053,7 +1049,7 @@ extension MPReal {
         //    integer, intent(in):: mpnw, n
         //    integer j, kk, kn, la, lb, lc, mn, mpnw1, na, nn
         //    real (mprknd) cl2, t1
-        var s0 = mp_init(size: 2*mpnw+13), s1 = mp_init(size: 2*mpnw+13), s2 = mp_init(size: 2*mpnw+13)
+        var s0 = mp_init(size: 2*mpnw+14), s1 = mp_init(size: 2*mpnw+14), s2 = mp_init(size: 2*mpnw+14)
         let cl2 = 1.4426950408889633
         //    integer (mpiknd), intent(in):: a(0:)
         //    integer (mpiknd), intent(out):: b(0:)
@@ -1069,12 +1065,13 @@ extension MPReal {
         let na = min(max(Int(abs(a[2])), Int(abs(a[la+2]))), mpnw)
         if na == 0 {
             if n >= 0 {
-                b[1] = mpnw
-                b[2] = 0
-                b[3] = 0
-                b[4] = 0
-                b[5] = 0
-                // goto 120
+//                b[1] = mpnw
+//                b[2] = 0
+//                b[3] = 0
+//                b[4] = 0
+//                b[5] = 0
+                mp_zero(&b, mpnw)
+                return // goto 120
             } else {
                 print("*** \(#function): Argument is zero and N is negative or zero.")
                 mpabrt (57)
@@ -1289,11 +1286,12 @@ extension MPReal {
         let nb = min(Int(abs(b[2])), mpnw)
         
         if (na == 0) {
-            c[1] = mpnw
-            c[2] = 0
-            c[3] = 0
-            c[4] = 0
-            c[5] = 0
+//            c[1] = mpnw
+//            c[2] = 0
+//            c[3] = 0
+//            c[4] = 0
+//            c[5] = 0
+            mp_zero(&c, mpnw)
             return
         }
         if nb == 0 {
@@ -1371,9 +1369,9 @@ extension MPReal {
         let nbth = mpnbt / 2
         //    real (mprknd), intent(in):: b
         //    real (mprknd) bb, bdh, bdvd, rdh
-        let bdh = Int(Double.pow(2.0, Double(nbth)))
+        let bdh = Double.pow(2.0, Double(nbth))
         let rdh = Double.pow(0.5, Double(nbth))
-        var cc = mp_init(size: 2*mpnw+10), d = mp_init(size: 2*mpnw+10)
+        var cc = mp_init(size: 2*mpnw+11), d = mp_init(size: 2*mpnw+11)
         //    integer (mpiknd), intent(in):: a(0:)
         //    integer (mpiknd), intent(out):: c(0:)
         //    integer (mpiknd) cc(0:2*mpnw+10), d(0:2*mpnw+10), ibb, &
@@ -1388,11 +1386,12 @@ extension MPReal {
         let na = min(Int(abs(a[2])), mpnw)
         let ib = sign(1, Int(b))
         if na == 0 {
-            c[1] = mpnw
-            c[2] = 0
-            c[3] = 0
-            c[4] = 0
-            c[5] = 0
+//            c[1] = mpnw
+//            c[2] = 0
+//            c[3] = 0
+//            c[4] = 0
+//            c[5] = 0
+            mp_zero(&c, mpnw)
             return
         } else if b == 0.0 {
             print("*** \(#function): Divisor is zero.")
@@ -1438,7 +1437,7 @@ extension MPReal {
         cc[0] = 0
         cc[1] = mpnw
         cc[2] = sign(mpnw, ia * ib)
-        cc[3...2*mpnw+10] = [Int](repeating: 0, count: 2*mpnw+7)[0...]
+        cc[3...2*mpnw+10] = [Int](repeating: 0, count: 2*mpnw+8)[0...]
         
         ///   Split D array into half-word chunks.
         d[0...3] = [0, 0, 0, 0]
@@ -1449,7 +1448,7 @@ extension MPReal {
             d[2*i+5] = c12
         }
         
-        d[2*na+6...2*mpnw+10] = [Int](repeating: 0, count: 2*mpnw+4-2*na)[0...]
+        d[2*na+6...2*mpnw+10] = [Int](repeating: 0, count: 2*mpnw+5-2*na)[0...]
         let b1 = ibb >> nbth
         let b2 = ibb - (b1 << nbth)
         
@@ -1457,8 +1456,8 @@ extension MPReal {
         ///   Double precision is employed to find and refine the trial divisor.
         var t1:Int
         for j in 3...2*mpnw+5 {
-            let bdvd = bdh * d[j] + d[j+1] + Int(Double(d[j+2]) * rdh)
-            let td = Int(floor(Double(bdvd) / bb))
+            let bdvd = bdh * Double(d[j]) + Double(d[j+1]) + Double(d[j+2]) * rdh
+            let td = Int(floor(bdvd / bb))
             t1 = b1 * td
             let c11 = t1 >> nbth
             let c12 = t1 - (c11 << nbth)
@@ -1551,13 +1550,6 @@ extension MPReal {
     ///   Examples of exact binary values (good): 123456789.0, 0.25d0, -5.3125d0.
     ///   Examples of inexact binary values (bad): 0.1d0, 123467.8d0, -3333.3d0.
     static func mpdmc (_ a:Double, _ n:Int, _ b: inout mp_real, _ mpnw:Int) {
-        //          implicit none
-        //          integer, intent(in):: mpnw, n
-        //          integer i, k, n1, n2
-        //          real (mprknd), intent(in):: a
-        //          real (mprknd) aa
-        //          integer (mpiknd), intent(out):: b(0:)
-        
         if (mpnw < 4 || b[0] < mpnw + 6) {
             print("*** \(#function): uninitialized or inadequately sized arrays")
             mpabrt (99)
@@ -1565,11 +1557,12 @@ extension MPReal {
         
         ///   Check for zero.
         if a == 0.0 {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
             return
         }
         var n1 = n / mpnbt
@@ -1594,7 +1587,6 @@ extension MPReal {
                     break // goto 120
                 }
             }
-            
         }
         
         ///   Store successive sections of AA into B.
@@ -1651,11 +1643,12 @@ extension MPReal {
         let ia = sign(1, a[2])
         let na = min(Int(abs(a[2])), mpnw)
         if na == 0  {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
             return
         }
         b[1] = mpnw
@@ -1685,16 +1678,18 @@ extension MPReal {
         let na = min(Int(abs(a[2])), mpnw)
         let ma = a[3]
         if na == 0  {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
-            c[1] = mpnw
-            c[2] = 0
-            c[3] = 0
-            c[4] = 0
-            c[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
+//            c[1] = mpnw
+//            c[2] = 0
+//            c[3] = 0
+//            c[4] = 0
+//            c[5] = 0
+            mp_zero(&c, mpnw)
             return // goto 120
         }
         
@@ -1705,12 +1700,13 @@ extension MPReal {
         
         ///   Place integer part in  B.
         let nb = min(max(ma + 1, 0), na)
-        if (nb == 0) {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+        if nb == 0 {
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
         } else {
             b[1] = mpnw
             b[2] = sign(nb, ia)
@@ -1726,11 +1722,12 @@ extension MPReal {
         ///   Place fractional part in C.
         let nc = na - nb
         if nc <= 0 {
-            c[1] = mpnw
-            c[2] = 0
-            c[3] = 0
-            c[4] = 0
-            c[5] = 0
+//            c[1] = mpnw
+//            c[2] = 0
+//            c[3] = 0
+//            c[4] = 0
+//            c[5] = 0
+            mp_zero(&c, mpnw)
         } else {
             c[1] = mpnw
             c[2] = sign(nc, ia)
@@ -1805,11 +1802,12 @@ extension MPReal {
         
         if na == 0 || nb == 0 {
             ///   One of the inputs is zero -- result is zero.
-            c[1] = mpnw
-            c[2] = 0
-            c[3] = 0
-            c[4] = 0
-            c[5] = 0
+//            c[1] = mpnw
+//            c[2] = 0
+//            c[3] = 0
+//            c[4] = 0
+//            c[5] = 0
+            mp_zero(&c, mpnw)
             return
         }
         
@@ -1930,11 +1928,12 @@ extension MPReal {
         let na = min(Int(abs(a[2])), mpnw)
         let ib = sign(1.0, b)
         if na == 0 || b == 0.0 {
-            c[1] = mpnw
-            c[2] = 0
-            c[3] = 0
-            c[4] = 0
-            c[5] = 0
+//            c[1] = mpnw
+//            c[2] = 0
+//            c[3] = 0
+//            c[4] = 0
+//            c[5] = 0
+            mp_zero(&c, mpnw)
             return
         } else if b == 1.0 {
             mpeq(a, &c, mpnw)
@@ -1968,7 +1967,6 @@ extension MPReal {
         let ibb = Int(bb)
         
         ///   If bb is not an integer, mpmul instead.
-        
         if bb != Double(ibb) {
             d[0] = mpnw + 6
             d[1] = mpnw
@@ -2078,11 +2076,12 @@ extension MPReal {
         let ma = a[3]
         if na == 0 {
             ///   A is zero -- result is zero.
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
             return
         }
         
@@ -2119,11 +2118,12 @@ extension MPReal {
         var ia = sign(1, d[2])
         var na = min(Int(abs(d[2])), mpnw)
         if na == 0  {
-            a[1] = mpnw
-            a[2] = 0
-            a[3] = 0
-            a[4] = 0
-            a[5] = 0
+//            a[1] = mpnw
+//            a[2] = 0
+//            a[3] = 0
+//            a[4] = 0
+//            a[5] = 0
+            mp_zero(&a, mpnw)
             return
         }
         let n4 = na + 4
@@ -2193,11 +2193,12 @@ extension MPReal {
         let na = min(Int(abs(a[2])), mpnw)
         if na == 0 {
             if n >= 0 {
-                b[1] = mpnw
-                b[2] = 0
-                b[3] = 0
-                b[4] = 0
-                b[5] = 0
+//                b[1] = mpnw
+//                b[2] = 0
+//                b[3] = 0
+//                b[4] = 0
+//                b[5] = 0
+                mp_zero(&b, mpnw)
                 return
             } else {
                 print("*** \(#function): Argument is zero and N is negative or zero.")
@@ -2276,8 +2277,8 @@ extension MPReal {
     static func mpnrtr (_ a:mp_real, _ n:Int, _ b: inout mp_real, _ mpnw:Int) {
         let alt = 0.693147180559945309, cl2 = 1.4426950408889633
         let nit = 3, n30 = 1 << 30 // 2 ** 30
-        var s0 = mp_init(size: mpnw+7), s1 = mp_init(size: mpnw+7), s2 = mp_init(size: mpnw+7)
-        var s3 = mp_init(size: mpnw+7), f1 = mp_init(size: 8)
+        var s0 = mp_init(size: mpnw+8), s1 = mp_init(size: mpnw+8), s2 = mp_init(size: mpnw+8)
+        var s3 = mp_init(size: mpnw+8), f1 = mp_init(size: 9)
         
         /// End of declaration
         
@@ -2290,11 +2291,12 @@ extension MPReal {
         let na = min(Int(abs(a[2])), mpnw)
         
         if na == 0 {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
             return
         }
         if ia < 0 {
@@ -2488,7 +2490,7 @@ extension MPReal {
         
         ///   Perform rounding.
         if na == mpnw {
-            if a[na+4] >= Int(0.5 * Double(mpbdx)) { a[na+3] = a[na+3] + 1 }
+            if Double(a[na+4]) >= 0.5 * Double(mpbdx) { a[na+3] = a[na+3] + 1 }
             ///   Release carries as far as necessary due to rounding.
             var gotoFlag = false
             for i in stride(from: na+2, through: 3, by: -1) {
@@ -2500,9 +2502,9 @@ extension MPReal {
             ///   Release of carries due to rounding continued all the way to the start --
             ///   i.e. number was entirely 9"s.
             if !gotoFlag {
-            a[4] = a[3]
-            na = 1
-            a2 = a2 + 1
+                a[4] = a[3]
+                na = 1
+                a2 = a2 + 1
             }
         }
         
@@ -2516,11 +2518,12 @@ extension MPReal {
                 if (a[i+1] != 0) { na = i - 2; gotoFlag = true; break /* goto 160 */ }
             }
             if !gotoFlag {
-                a[1] = mpnw
-                a[2] = 0
-                a[3] = 0
-                a[4] = 0
-                a[5] = 0
+//                a[1] = mpnw
+//                a[2] = 0
+//                a[3] = 0
+//                a[4] = 0
+//                a[5] = 0
+                mp_zero(&a, mpnw)
                 return
             }
             // 160  continue
@@ -2538,11 +2541,12 @@ extension MPReal {
         
         ///   Check for zero.
         if a[4] == 0 {
-            a[1] = mpnw
-            a[2] = 0
-            a[3] = 0
-            a[4] = 0
-            a[5] = 0
+//            a[1] = mpnw
+//            a[2] = 0
+//            a[3] = 0
+//            a[4] = 0
+//            a[5] = 0
+            mp_zero(&a, mpnw)
         } else {
             a[1] = mpnw
             a[2] = sign(na, ia)
@@ -2599,11 +2603,12 @@ extension MPReal {
         let na = min(Int(abs (a[2])), mpnw)
         
         if na == 0 {
-            b[1] = mpnw
-            b[2] = 0
-            b[3] = 0
-            b[4] = 0
-            b[5] = 0
+//            b[1] = mpnw
+//            b[2] = 0
+//            b[3] = 0
+//            b[4] = 0
+//            b[5] = 0
+            mp_zero(&b, mpnw)
             return
         }
         if ia < 0 {
@@ -2704,7 +2709,7 @@ extension MPReal {
 //        for i = 3, nb + 5 {
 //            s(i) = b(i)
 //        }
-        mpadd (a, s, &c, mpnw)
+        mpadd(a, s, &c, mpnw)
     } // mpsub
 
     // MARK: - FFT operations
@@ -3246,9 +3251,9 @@ extension MPReal {
     static func mpctomp (_ a:String, _ b: inout mp_real, _ mpnw: Int) {
         let a = a.trimmingCharacters(in: .whitespacesAndNewlines)
         let lexpmx = 9
-        let digits = "0123456789"
+//        let digits = "0123456789"
         let d10w = Double.pow(10.0, Double(mpndpw))
-        var f = mp_init(size: 8)
+        var f = mp_init(size: 9)
         var s0 = mp_init(size: mpnw+7), s1 = mp_init(size: mpnw+7), s2 = mp_init(size: mpnw+7)
         
         /// write (6, *) "mpctomp: a, n, mpnw =", n, mpnw
@@ -3277,17 +3282,17 @@ extension MPReal {
         for i in 2...8 { f[i] = 0 }
         
         let mpnw1 = mpnw + 1
-        var kde = 0
-        let kend = 0
-        var kexpend = 0
-        var kexpst = 0
-        var kexpsgn = 0
-        var knumend1 = 0
-        var knumend2 = 0
-        var knumst1 = 0
-        var knumst2 = 0
-        var kper = 0
-        var ksgn = 0
+        var kde = -1
+        let kend = a.count-1
+        var kexpend = -1
+        var kexpst = -1
+        var kexpsgn = -1
+        var knumend1 = -1
+        var knumend2 = -1
+        var knumst1 = -1
+        var knumst2 = -1
+        var kper = -1
+        var ksgn = -1
         let kstart = 0
         
         ///   Locate:
@@ -3313,40 +3318,40 @@ extension MPReal {
         for (i,ch) in a.enumerated() {
             if ch == " " {
                 abort(2)
-            } else if ch == "+" || ch == "-" {
-                if (i == kstart) {
+            } else if ["+", "-"].contains(ch) {
+                if i == kstart {
                     ksgn = i
-                } else if (kde > 0 && kexpsgn == 0 && kexpst == 0 && i < kend) {
+                } else if kde > 0 && kexpsgn < 0 && kexpst < 0 && i < kend {
                     kexpsgn = i
                 } else {
                     abort(3)
                 }
-            } else if (ch == "e" || ch == "E" || ch == "d" || ch == "D") {
-                if (kde == 0 && kper > 0 && i < kend) {
+            } else if ["E", "D"].contains(ch.uppercased()) {
+                if kde < 0 && kper >= 0 && i < kend {
                     kde = i
                     knumend2 = i - 1
                 } else {
                     abort(4)
                 }
             } else if ch == "." {
-                if (kper == 0 && kde == 0 && knumst1 > 0 && knumst2 == 0) {
+                if kper < 0 && kde < 0 && knumst1 >= 0 && knumst2 < 0 {
                     kper = i
                     knumend1 = i - 1
                 } else {
                     abort(5)
                 }
-            } else if digits.contains(ch) {
-                if knumst1 == 0 {
+            } else if ch.isWholeNumber {
+                if knumst1 < 0 {
                     knumst1 = i
-                } else if kper > 0 && knumst2 == 0 && kde == 0 {
+                } else if kper >= 0 && knumst2 < 0 && kde < 0 {
                     knumst2 = i
-                } else if kde > 0 && kexpst == 0 {
+                } else if kde >= 0 && kexpst < 0 {
                     kexpst = i
                 }
                 if i == kend {
-                    if (knumst2 > 0 && kde == 0) {
+                    if knumst2 >= 0 && kde < 0 {
                         knumend2 = i
-                    } else if (kexpst > 0) {
+                    } else if kexpst >= 0 {
                         kexpend = i
                     } else {
                         abort(6)
@@ -3395,13 +3400,12 @@ extension MPReal {
         
         ///   Construct first (left-over) portion, right-justified in CA.
         var ca = ""
-        var ix = knumst1 - 1
+        var ix = knumst1-1
         for _ in 1...n2 {
             ix = ix + 1
-            if (ix == kper) { ix = ix + 1 }
+            if ix == kper { ix = ix + 1 }
             ca.append(chs[ix])
         }
-        ca.append(chs[ix])
         
         var t1 = mpdigin(ca, mpndpw)
         if t1 > 0 {
@@ -3413,19 +3417,19 @@ extension MPReal {
             f[3] = 0
             f[4] = 0
         }
-        mpeq (f, &s0, mpnw1)
+        mpeq(f, &s0, mpnw1)
         
         ///   Process remaining chunks of digits.
-        ca = ""
         for _ in 1...n1 {
+            ca = ""
             for _ in 1...mpndpw {
                 ix = ix + 1
-                if (ix == kper) { ix = ix + 1 }
+                if ix == kper { ix = ix + 1 }
                 ca.append(chs[ix])
             }
             
-            t1 = mpdigin (ca, mpndpw)
-            if (t1 > 0) {
+            t1 = mpdigin(ca, mpndpw)
+            if t1 > 0 {
                 f[2] = 1
                 f[3] = 0
                 f[4] = Int(t1)
@@ -3434,13 +3438,11 @@ extension MPReal {
                 f[3] = 0
                 f[4] = 0
             }
-            
             mpmuld (s0, d10w, &s1, mpnw1)
             mpadd (s1, f, &s0, mpnw1)
         }
         
         ///  Correct exponent.
-        
         iexp = iexp - Double(lnum2)
         f[2] = 1
         f[3] = 0
@@ -3486,16 +3488,17 @@ extension MPReal {
     ///   nonblank length N.  A must be a whole number, and N must be sufficient
     ///   to hold it.  This is intended for internal use only.
     static func mpdigout (_ a:Double, _ n:Int) -> String {
-        let digits = Array("0123456789")
-        var ca = ""
-        var d1 = abs(a)
-        for _ in stride(from: n, through: 1, by: -1) {
-            let d2 = aint(d1 / 10.0)
-            let k = Int(d1 - 10.0 * d2)
-            d1 = d2
-            ca.insert(digits[k], at: ca.startIndex)
-        }
-        return ca
+//        let digits = Array("0123456789")
+//        var ca = ""
+        let d1 = Int(abs(a))
+        let ca = String(d1)
+//        for _ in stride(from: n, through: 1, by: -1) {
+//            let d2 = aint(d1 / 10.0)
+//            let k = Int(d1 - 10.0 * d2)
+//            d1 = d2
+//            ca.insert(digits[k], at: ca.startIndex)
+//        }
+        return "".padding(toLength: n-ca.count, withPad: "0", startingAt: 0) + ca
     } // mpdigout
     
     static func sign(_ v:Int, _ i:Int) -> Int { Int(v.magnitude) * i.signum() }
@@ -3513,7 +3516,7 @@ extension MPReal {
         let digits = Array("0123456789")
         let d10w = Double.pow(10.0, Double(mpndpw))
         var f = mp_init(size: 9)
-        var s0 = mp_init(size: mpnw+7), s1 = mp_init(size: mpnw+7)
+        var s0 = mp_init(size: mpnw+7), s1 = mp_init(size: mpnw+7), s2 = mp_init(size: mpnw+7)
         
         if (mpnw < 4 || a[0] < abs(a[2]) + 4 || nb < nd + 10) {
             print("*** \(#function): uninitialized or inadequately sized arrays")
@@ -3524,6 +3527,7 @@ extension MPReal {
         let na = min(abs(a[2]), mpnw)
         s0[0] = mpnw + 7
         s1[0] = mpnw + 7
+        s2[0] = mpnw + 7
         let mpnw1 = mpnw + 1
         
         ///   Set f = 10.
@@ -3548,7 +3552,7 @@ extension MPReal {
             }
             
             if nexp == 0 {
-                mpeq (a, &s1, mpnw1)
+                mpeq(a, &s1, mpnw1)
             } else if nexp > 0 {
                 mpnpwr(f, nexp, &s0, mpnw1)
                 mpdiv(a, s0, &s1, mpnw1)
@@ -3623,13 +3627,6 @@ extension MPReal {
             
             let ca = mpdigout(an, mpndpw)
             b2 += ca
-//            for _ in 1...mpndpw {
-//                if (b2.count > nb + 50) {
-//                    print("MPEFORMAT: Insufficient space in B2 array.")
-//                    mpabrt (84)
-//                }
-           
-//            }
             
             mpsub(s1, f, &s0, mpnw1)
             mpmuld(s0, d10w, &s1, mpnw1)
@@ -3738,13 +3735,13 @@ extension MPReal {
         
         ///   Copy the exponent into CA.
         var j = 0
-        var ca = " "
+        var ca = ""
         for i in k..<b2c.count {
             j = j + 1
             if j <= 16 { ca.append(b2c[i]) }
         }
         
-        let t1 = mpdigin (ca, j)
+        let t1 = mpdigin(ca, j)
         
         ///   Check if there is enough space in the output array for all digits.
         ///   Not necessary with Swift
@@ -3785,6 +3782,7 @@ extension MPReal {
             
             ///   Copy nd more digits.
             for _ in 1...nd {
+                if b2.isEmpty { break }
                 ch = b2.removeFirst()
                 b.append(ch)
             }

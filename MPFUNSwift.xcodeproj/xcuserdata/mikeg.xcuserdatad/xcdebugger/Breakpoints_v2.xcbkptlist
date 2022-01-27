@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "5F276139-A8DA-41E6-A088-DEEACBC89BB1"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "34667647-27D4-43E2-9F4D-41942E65FA78"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "MPFUNSwiftTests/MPFUNSwiftTests.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "80"
+            endingLineNumber = "80"
+            landmarkName = "testExample()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "34667647-27D4-43E2-9F4D-41942E65FA78 - fb8edce897b22f53"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MPFUNSwiftTests.MPFUNSwiftTests.testExample() throws -&gt; ()"
+                  moduleName = "MPFUNSwiftTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mikeg/Work/MPFUNSwift/MPFUNSwiftTests/MPFUNSwiftTests.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "109"
+                  endingLineNumber = "109"
+                  offsetFromSymbolStart = "3338">
+               </Location>
+               <Location
+                  uuid = "34667647-27D4-43E2-9F4D-41942E65FA78 - fb8edce897b22b52"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MPFUNSwiftTests.MPFUNSwiftTests.testExample() throws -&gt; ()"
+                  moduleName = "MPFUNSwiftTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mikeg/Work/MPFUNSwift/MPFUNSwiftTests/MPFUNSwiftTests.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "78"
+                  endingLineNumber = "78"
+                  offsetFromSymbolStart = "1871">
+               </Location>
+               <Location
+                  uuid = "34667647-27D4-43E2-9F4D-41942E65FA78 - fb8edce897b22b52"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MPFUNSwiftTests.MPFUNSwiftTests.testExample() throws -&gt; ()"
+                  moduleName = "MPFUNSwiftTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mikeg/Work/MPFUNSwift/MPFUNSwiftTests/MPFUNSwiftTests.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "78"
+                  endingLineNumber = "78"
+                  offsetFromSymbolStart = "1869">
+               </Location>
+               <Location
+                  uuid = "34667647-27D4-43E2-9F4D-41942E65FA78 - fb8edce897b22b90"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "MPFUNSwiftTests.MPFUNSwiftTests.testExample() throws -&gt; ()"
+                  moduleName = "MPFUNSwiftTests"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/mikeg/Work/MPFUNSwift/MPFUNSwiftTests/MPFUNSwiftTests.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "80"
+                  endingLineNumber = "80"
+                  offsetFromSymbolStart = "1869">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>
